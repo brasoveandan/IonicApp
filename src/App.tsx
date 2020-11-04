@@ -2,7 +2,7 @@ import React from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import Home from './pages/Home';
+import { PersonEdit, PersonList } from './todo';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -22,16 +22,21 @@ import '@ionic/react/css/display.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import { PersonProvider } from './todo/PersonProvider';
 
 const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-      <IonRouterOutlet>
-        <Route path="/home" component={Home} exact={true} />
-        <Route exact path="/" render={() => <Redirect to="/home" />} />
-      </IonRouterOutlet>
-    </IonReactRouter>
-  </IonApp>
+    <IonApp>
+        <PersonProvider>
+            <IonReactRouter>
+                <IonRouterOutlet>
+                    <Route path="/persons" component={PersonList} exact={true} />
+                    <Route path="/person" component={PersonEdit} exact={true} />
+                    <Route path="/person/:id" component={PersonEdit} exact={true} />
+                    <Route exact path="/" render={() => <Redirect to="/persons" />} />
+                </IonRouterOutlet>
+            </IonReactRouter>
+        </PersonProvider>
+    </IonApp>
 );
 
 export default App;
