@@ -1,5 +1,5 @@
 export interface PersonProps {
-    id?: string;
+    _id?: string;
     nume: string;
     prenume: string;
     telefon: string;

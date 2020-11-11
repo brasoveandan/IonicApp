@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { RouteComponentProps } from 'react-router';
 import {
+    IonButton, IonButtons,
     IonContent,
     IonFab,
     IonFabButton,
@@ -15,25 +16,34 @@ import { add } from 'ionicons/icons';
 import Person from './Person';
 import { getLogger } from '../core';
 import { PersonContext } from './PersonProvider';
+import {login} from "../auth/authApi";
 
 const log = getLogger('PersonList');
 
 const PersonList: React.FC<RouteComponentProps> = ({ history }) => {
     const { persons, fetching, fetchingError } = useContext(PersonContext);
+    const handleLogout = () => {
+        log('handleLogout...')
+    };
     log('render');
     return (
         <IonPage>
             <IonHeader>
                 <IonToolbar>
                     <IonTitle>My Agenda</IonTitle>
+                    <IonButtons slot="end">
+                        <IonButton onClick={handleLogout}>
+                            Logout
+                        </IonButton>
+                    </IonButtons>
                 </IonToolbar>
             </IonHeader>
             <IonContent>
                 <IonLoading isOpen={fetching} message="Fetching Persons" />
                 {persons && (
                     <IonList>
-                        {persons.map(({ id, nume, prenume, telefon, ocupatie}) =>
-                            <Person key={id} id={id} nume={nume} prenume={prenume} telefon={telefon} ocupatie={ocupatie} onEdit={id => history.push(`/person/${id}`)} />)}
+                        {persons.map(({ _id, nume, prenume, telefon, ocupatie}) =>
+                            <Person key={_id} _id={_id} nume={nume} prenume={prenume} telefon={telefon} ocupatie={ocupatie} onEdit={id => history.push(`/person/${id}`)} />)}
                     </IonList>
                 )}
                 {fetchingError && (

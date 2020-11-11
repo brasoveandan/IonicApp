@@ -1,59 +1,33 @@
-// @ts-ignore
 import axios from 'axios';
-import { getLogger } from '../core';
+import { authConfig, baseUrl, getLogger, withLogs } from '../core';
 import { PersonProps } from './PersonProps';
 
-const log = getLogger('personApi');
+const personUrl = `http://${baseUrl}/api/person`;
 
-const baseUrl = 'localhost:3000';
-const personUrl = `http://${baseUrl}/person`;
-
-interface ResponseProps<T> {
-    data: T;
+export const getPersons: (token: string) => Promise<PersonProps[]> = token => {
+    return withLogs(axios.get(personUrl, authConfig(token)), 'getPersons');
 }
 
-function withLogs<T>(promise: Promise<ResponseProps<T>>, fnName: string): Promise<T> {
-    log(`${fnName} - started`);
-    return promise
-        .then(res => {
-            log(`${fnName} - succeeded`);
-            return Promise.resolve(res.data);
-        })
-        .catch(err => {
-            log(`${fnName} - failed`);
-            return Promise.reject(err);
-        });
+export const createPerson: (token: string, person: PersonProps) => Promise<PersonProps[]> = (token, person) => {
+    return withLogs(axios.post(personUrl, person, authConfig(token)), 'createPerson');
 }
 
-const config = {
-    headers: {
-        'Content-Type': 'application/json'
-    }
-};
-
-export const getPersons: () => Promise<PersonProps[]> = () => {
-    return withLogs(axios.get(personUrl, config), 'getPersons');
-}
-
-export const createPerson: (person: PersonProps) => Promise<PersonProps[]> = person => {
-    return withLogs(axios.post(personUrl, person, config), 'createPerson');
-}
-
-export const updatePerson: (person: PersonProps) => Promise<PersonProps[]> = person => {
-    return withLogs(axios.put(`${personUrl}/${person.id}`, person, config), 'updatePerson');
+export const updatePerson: (token: string, person: PersonProps) => Promise<PersonProps[]> = (token, person) => {
+    return withLogs(axios.put(`${personUrl}/${person._id}`, person, authConfig(token)), 'updatePerson');
 }
 
 interface MessageData {
-    event: string;
-    payload: {
-        person: PersonProps;
-    };
+    type: string;
+    payload: PersonProps;
 }
 
-export const newWebSocket = (onMessage: (data: MessageData) => void) => {
-    const ws = new WebSocket(`ws://${baseUrl}`)
+const log = getLogger('ws');
+
+export const newWebSocket = (token: string, onMessage: (data: MessageData) => void) => {
+    const ws = new WebSocket(`ws://${baseUrl}`);
     ws.onopen = () => {
         log('web socket onopen');
+        ws.send(JSON.stringify({ type: 'authorization', payload: { token } }));
     };
     ws.onclose = () => {
         log('web socket onclose');

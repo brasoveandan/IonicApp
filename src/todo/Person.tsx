@@ -6,9 +6,9 @@ interface PersonPropsExt extends PersonProps {
     onEdit: (id?: string) => void;
 }
 
-const Person: React.FC<PersonPropsExt> = ({ id, nume, prenume, telefon, ocupatie, onEdit }) => {
+const Person: React.FC<PersonPropsExt> = ({ _id, nume, prenume, telefon, ocupatie, onEdit }) => {
     return (
-        <IonItem onClick={() => onEdit(id)}>
+        <IonItem onClick={() => onEdit(_id)}>
             <IonLabel>{nume}</IonLabel>
             <IonLabel>{prenume}</IonLabel>
             <IonLabel>{telefon}</IonLabel>

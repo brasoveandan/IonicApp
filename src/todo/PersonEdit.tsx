@@ -31,7 +31,7 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
     useEffect(() => {
         log('useEffect');
         const routeId = match.params.id || '';
-        const person = persons?.find(it => it.id === routeId);
+        const person = persons?.find(it => it._id === routeId);
         setPerson(person);
         if (person) {
             setNume(person.nume);

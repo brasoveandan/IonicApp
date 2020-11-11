@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useReducer } from 'react';
+import React, { useCallback, useContext, useEffect, useReducer } from 'react';
 import PropTypes from 'prop-types';
 import { getLogger } from '../core';
 import { PersonProps } from './PersonProps';
-import {createPerson, getPersons, newWebSocket, updatePerson} from "./personApi";
+import { createPerson, getPersons, newWebSocket, updatePerson } from './personApi';
+import { AuthContext } from '../auth';
 
 const log = getLogger('PersonProvider');
 
@@ -48,7 +49,7 @@ const reducer: (state: PersonsState, action: ActionProps) => PersonsState =
             case SAVE_ITEM_SUCCEEDED:
                 const persons = [...(state.persons || [])];
                 const person = payload.person;
-                const index = persons.findIndex(it => it.id === person.id);
+                const index = persons.findIndex(it => it._id === person._id);
                 if (index === -1) {
                     persons.splice(0, 0, person);
                 } else {
@@ -69,11 +70,12 @@ interface PersonProviderProps {
 }
 
 export const PersonProvider: React.FC<PersonProviderProps> = ({ children }) => {
+    const { token } = useContext(AuthContext);
     const [state, dispatch] = useReducer(reducer, initialState);
     const { persons, fetching, fetchingError, saving, savingError } = state;
-    useEffect(getPersonsEffect, []);
-    useEffect(wsEffect, []);
-    const savePerson = useCallback<SavePersonFn>(savePersonCallback, []);
+    useEffect(getPersonsEffect, [token]);
+    useEffect(wsEffect, [token]);
+    const savePerson = useCallback<SavePersonFn>(savePersonCallback, [token]);
     const value = { persons, fetching, fetchingError, saving, savingError, savePerson };
     log('returns');
     return (
@@ -90,10 +92,13 @@ export const PersonProvider: React.FC<PersonProviderProps> = ({ children }) => {
         }
 
         async function fetchPersons() {
+            if (!token?.trim()) {
+                return;
+            }
             try {
                 log('fetchPersons started');
                 dispatch({ type: FETCH_ITEMS_STARTED });
-                const persons = await getPersons();
+                const persons = await getPersons(token);
                 log('fetchPersons succeeded');
                 if (!canceled) {
                     dispatch({ type: FETCH_ITEMS_SUCCEEDED, payload: { persons } });
@@ -109,7 +114,7 @@ export const PersonProvider: React.FC<PersonProviderProps> = ({ children }) => {
         try {
             log('savePerson started');
             dispatch({ type: SAVE_ITEM_STARTED });
-            const savedPerson = await (person.id ? updatePerson(person) : createPerson(person));
+            const savedPerson = await (person._id ? updatePerson(token, person) : createPerson(token, person));
             log('savePerson succeeded');
             dispatch({ type: SAVE_ITEM_SUCCEEDED, payload: { person: savedPerson } });
         } catch (error) {
@@ -121,20 +126,23 @@ export const PersonProvider: React.FC<PersonProviderProps> = ({ children }) => {
     function wsEffect() {
         let canceled = false;
         log('wsEffect - connecting');
-        const closeWebSocket = newWebSocket(message => {
-            if (canceled) {
-                return;
-            }
-            const { event, payload: { person }} = message;
-            log(`ws message, person ${event}`);
-            if (event === 'created' || event === 'updated') {
-                dispatch({ type: SAVE_ITEM_SUCCEEDED, payload: { person } });
-            }
-        });
+        let closeWebSocket: () => void;
+        if (token?.trim()) {
+            closeWebSocket = newWebSocket(token, message => {
+                if (canceled) {
+                    return;
+                }
+                const { type, payload: person } = message;
+                log(`ws message, person ${type}`);
+                if (type === 'created' || type === 'updated') {
+                    dispatch({ type: SAVE_ITEM_SUCCEEDED, payload: { person } });
+                }
+            });
+        }
         return () => {
             log('wsEffect - disconnecting');
             canceled = true;
-            closeWebSocket();
+            closeWebSocket?.();
         }
     }
 };
