@@ -18,6 +18,7 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({ component: Component
     return (
         <Route {...rest} render={props => {
             if (isAuthenticated) {
+
                 // @ts-ignore
                 return <Component {...props} />;
             }

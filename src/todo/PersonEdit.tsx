@@ -4,9 +4,9 @@ import {
     IonButtons,
     IonContent,
     IonHeader,
-    IonInput,
+    IonInput, IonItem, IonLabel, IonListHeader,
     IonLoading,
-    IonPage,
+    IonPage, IonRadio, IonRadioGroup,
     IonTitle,
     IonToolbar
 } from '@ionic/react';
@@ -22,7 +22,7 @@ interface PersonEditProps extends RouteComponentProps<{
 }> {}
 
 const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
-    const { persons, saving, savingError, savePerson } = useContext(PersonContext);
+    const { persons, saving, savingError, savePerson, deletePerson } = useContext(PersonContext);
     const [nume, setNume] = useState('');
     const [prenume, setPrenume] = useState('');
     const [telefon, setTelefon] = useState('');
@@ -44,6 +44,10 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
         const editedPerson = person ? { ...person, nume, prenume, telefon, ocupatie } : { nume, prenume, telefon, ocupatie };
         savePerson && savePerson(editedPerson).then(() => history.goBack());
     };
+    const handleDelete = () => {
+        const editPerson = person ? { ...person, nume, prenume, telefon, ocupatie} : {nume, prenume, telefon, ocupatie};
+        deletePerson && deletePerson(editPerson).then(() => history.goBack());
+    };
     log('render');
     return (
         <IonPage>
@@ -54,6 +58,9 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
                         <IonButton onClick={handleSave}>
                             Save
                         </IonButton>
+                        <IonButton onClick={handleDelete}>
+                            Delete
+                        </IonButton>
                     </IonButtons>
                 </IonToolbar>
             </IonHeader>
@@ -61,12 +68,27 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
                 <IonInput className="inputField" placeholder="Nume" value={nume} onIonChange={e => setNume(e.detail.value || '')}/>
                 <IonInput className="inputField" placeholder="Prenume" value={prenume} onIonChange={e => setPrenume(e.detail.value || '')} />
                 <IonInput className="inputField" placeholder="Telefon" value={telefon} onIonChange={e => setTelefon(e.detail.value || '')}/>
-                <IonInput className="inputField" placeholder="Ocupatie" value={ocupatie} onIonChange={e => setOcupatie(e.detail.value || '')} />
+                <IonRadioGroup allowEmptySelection={false} value={ocupatie} onIonChange={e => setOcupatie(e.detail.value)}>
+                    <IonListHeader>
+                        <IonLabel>Select Group: </IonLabel>
+                    </IonListHeader>
+                    <IonItem>
+                        <IonLabel>Not set</IonLabel>
+                        <IonRadio slot="end" color="primary" value="Not set" ></IonRadio>
+                    </IonItem>
+                    <IonItem>
+                        <IonLabel>Favourites</IonLabel>
+                        <IonRadio slot="end" color="primary" value="Favourites"></IonRadio>
+                    </IonItem>
+                    <IonItem>
+                        <IonLabel>Family</IonLabel>
+                        <IonRadio slot="end" color="primary" value="Family"></IonRadio>
+                    </IonItem>
+
                 <IonLoading isOpen={saving} />
                 {savingError && (
                     <div>{savingError.message || 'Failed to save Person'}</div>
-                )}
-            </IonContent>
+                )}</IonRadioGroup></IonContent>
         </IonPage>
     );
 };
