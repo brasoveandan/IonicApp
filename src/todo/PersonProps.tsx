@@ -4,4 +4,5 @@ export interface PersonProps {
     prenume: string;
     telefon: string;
     ocupatie: string;
+    status: number;
 }

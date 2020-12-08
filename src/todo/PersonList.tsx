@@ -19,39 +19,53 @@ import { getLogger } from '../core';
 import { PersonContext } from './PersonProvider';
 import {AuthContext} from "../auth";
 import {PersonProps} from "./PersonProps";
+import {useNetwork} from "../utils/useNetwork";
 
 const log = getLogger('PersonList');
 
 const PersonList: React.FC<RouteComponentProps> = ({ history }) => {
-    const { persons, fetching, fetchingError } = useContext(PersonContext);
+    const { persons, fetching, fetchingError, updateServer } = useContext(PersonContext);
     const [disableInfiniteScroll, setDisableInfiniteScroll] = useState<boolean>(
         false
     );
     const [filter, setFilter] = useState<string | undefined>(undefined);
     const [search, setSearch] = useState<string>("");
-    const [pos, setPos] = useState(11);
+    const [pos, setPos] = useState(10);
     const selectOptions = ["Not set", "Favourites", "Family"];
     const [personsShow, setPersonsShow] = useState<PersonProps[]>([]);
     const { logout } = useContext(AuthContext);
+    const { networkStatus } = useNetwork();
     const handleLogout = () => {
         logout?.();
         return <Redirect to={{ pathname: "/login" }} />;
     };
+
+    //update server when network status is back online
     useEffect(() => {
-        if (persons?.length) {
-            setPersonsShow(persons.slice(0, 10));
+        if (networkStatus.connected === true) {
+            updateServer && updateServer();
         }
-    }, [persons]);
+    }, [networkStatus.connected]);
+
+
     log("render");
     async function searchNext($event: CustomEvent<void>) {
         if (persons && pos < persons.length) {
-            setPersonsShow([...personsShow, ...persons.slice(pos, 11 + pos)]);
-            setPos(pos + 12);
+            setPersonsShow([...persons.slice(0, 10 + pos)]); //
+            setPos(pos + 5);
         } else {
             setDisableInfiniteScroll(true);
         }
-        ($event.target as HTMLIonInfiniteScrollElement).complete();
+        log('products from ' + 0 + " to " + pos)
+        log(personsShow)
+        await ($event.target as HTMLIonInfiniteScrollElement).complete();
     }
+
+    useEffect(() => {
+        if (persons?.length) {
+            setPersonsShow(persons.slice(0, pos));
+        }
+    }, [persons]);
 
     useEffect(() => {
         if (filter && persons) {
@@ -68,7 +82,8 @@ const PersonList: React.FC<RouteComponentProps> = ({ history }) => {
         <IonPage>
             <IonHeader>
                 <IonToolbar>
-                    <IonTitle>My Agenda</IonTitle>
+                    <IonTitle>My Agenda: <b>{networkStatus.connected ? "online" : "offline"}</b>
+                    </IonTitle>
                     <IonButtons slot="end">
                         <IonButton onClick={handleLogout}>
                             Logout
@@ -104,12 +119,13 @@ const PersonList: React.FC<RouteComponentProps> = ({ history }) => {
                             prenume={person.prenume}
                             telefon={person.telefon}
                             ocupatie={person.ocupatie}
+                            status={person.status}
                             onEdit={(id) => history.push(`/person/${id}`)}
                         />
                     );
                 })}
                 <IonInfiniteScroll
-                    threshold="10px"
+                    threshold="100px"
                     disabled={disableInfiniteScroll}
                     onIonInfinite={(e: CustomEvent<void>) => searchNext(e)}>
                     <IonInfiniteScrollContent loadingText="Loading more contacts..."></IonInfiniteScrollContent>

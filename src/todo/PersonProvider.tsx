@@ -6,16 +6,18 @@ import {createPerson, erasePerson, getPersons, newWebSocket, updatePerson} from 
 import { AuthContext } from '../auth';
 
 import { Plugins } from "@capacitor/core"
-import { key } from "ionicons/icons";
 
 const log = getLogger('PersonProvider');
 const { Storage } = Plugins;
 
-type SavePersonFn = (person: PersonProps) => Promise<any>;
-type DeletePersonFn = (person: PersonProps) => Promise<any>;
+type SavePersonFn = (person: PersonProps,connected: boolean) => Promise<any>;
+type DeletePersonFn = (person: PersonProps,connected: boolean) => Promise<any>;
+type UpdateServerFn = () => Promise<any>;
+type ServerPerson = (id: string, version: number) => Promise<any>;
 
 export interface PersonsState {
     persons?: PersonProps[],
+    oldPerson?: PersonProps,
     fetching: boolean,
     fetchingError?: Error | null,
     saving: boolean,
@@ -24,6 +26,8 @@ export interface PersonsState {
     deletingError?: Error | null,
     savePerson?: SavePersonFn,
     deletePerson?: DeletePersonFn;
+    updateServer?: UpdateServerFn,
+    getServerPerson?: ServerPerson,
 }
 
 interface ActionProps {
@@ -35,17 +39,23 @@ const initialState: PersonsState = {
     fetching: false,
     saving: false,
     deleting: false,
+    oldPerson: undefined,
 };
 
 const FETCH_PERSONS_STARTED = 'FETCH_PERSONS_STARTED';
 const FETCH_PERSONS_SUCCEEDED = 'FETCH_PERSONS_SUCCEEDED';
 const FETCH_PERSONS_FAILED = 'FETCH_PERSONS_FAILED';
+
 const SAVE_PERSON_STARTED = 'SAVE_PERSON_STARTED';
 const SAVE_PERSON_SUCCEEDED = 'SAVE_PERSON_SUCCEEDED';
+const SAVE_PERSON_SUCCEEDED_OFFLINE = "SAVE_PERSON_SUCCEEDED_OFFLINE";
 const SAVE_PERSON_FAILED = 'SAVE_PERSON_FAILED';
+
 const DELETE_PERSON_STARTED = "DELETE_PERSON_STARTED";
 const DELETE_PERSON_SUCCEEDED = "DELETE_PERSON_SUCCEEDED";
 const DELETE_PERSON_FAILED = "DELETE_PERSON_FAILED";
+
+const CONFLICT_SOLVED = "CONFLICT_SOLVED";
 
 const reducer: (state: PersonsState, action: ActionProps) => PersonsState =
     (state, { type, payload }) => {
@@ -104,12 +114,14 @@ export const PersonProvider: React.FC<PersonProviderProps> = ({ children }) => {
         saving,
         deleting,
         savingError,
-        deletingError
+        deletingError,
+        oldPerson
     } = state;
     useEffect(getPersonsEffect, [token]);
     useEffect(wsEffect, [token]);
     const savePerson = useCallback<SavePersonFn>(savePersonCallback, [token]);
     const deletePerson = useCallback<DeletePersonFn>(deletePersonCallback, [token]);
+    const updateServer = useCallback<UpdateServerFn>(updateServerCallback, [token]);
     const value = {
         persons,
         fetching,
@@ -120,6 +132,8 @@ export const PersonProvider: React.FC<PersonProviderProps> = ({ children }) => {
         deletingError,
         savePerson,
         deletePerson,
+        updateServer,
+        oldPerson
     };
     log('returns');
     return (
@@ -178,31 +192,124 @@ export const PersonProvider: React.FC<PersonProviderProps> = ({ children }) => {
         }
     }
 
-    async function savePersonCallback(person: PersonProps) {
+    async function savePersonCallback(person: PersonProps, connected: boolean) {
         try {
+            if (!connected) {
+                throw new Error();
+            }
             log('savePerson started');
             dispatch({ type: SAVE_PERSON_STARTED });
             const savedPerson = await (person._id ? updatePerson(token, person) : createPerson(token, person));
             log('savePerson succeeded');
             dispatch({ type: SAVE_PERSON_SUCCEEDED, payload: { person: savedPerson } });
-        } catch (error) {
-            log('savePerson failed');
-            dispatch({ type: SAVE_PERSON_FAILED, payload: { error } });
+            dispatch({ type: CONFLICT_SOLVED });
+        }
+        catch (error) {
+            log('savePerson failed with error: ', error);
+
+            if (person._id === undefined) {
+                person._id = generateRandomID()
+                person.status = 1;
+                alert("Person saved locally!!!");
+            } else {
+                person.status = 2;
+                alert("Person updated locally!!!");
+            }
+            await Storage.set({
+                key: person._id,
+                value: JSON.stringify(person),
+            });
+
+            dispatch({ type: SAVE_PERSON_SUCCEEDED_OFFLINE, payload: { person: person } });
         }
     }
 
-    async function deletePersonCallback(person: PersonProps) {
+    async function deletePersonCallback(person: PersonProps, connected: boolean) {
         try {
-            log("delete started");
+            if (!connected) {
+                throw new Error();
+            }
             dispatch({ type: DELETE_PERSON_STARTED });
-            const deletedPerson = await erasePerson(token, person);
-            log("delete succeeded");
-            console.log(deletedPerson);
+            const deletedProduct = await erasePerson(token, person);
+            console.log(deletedProduct);
+            await Storage.remove({ key: person._id! });
             dispatch({ type: DELETE_PERSON_SUCCEEDED, payload: { person: person } });
-        } catch (error) {
-            log("delete failed");
-            dispatch({ type: DELETE_PERSON_FAILED, payload: { error } });
         }
+        catch (error) {
+            person.status = 3;
+            await Storage.set({
+                key: JSON.stringify(person._id),
+                value: JSON.stringify(person),
+            });
+            alert("Product deleted locally!!!");
+            dispatch({ type: DELETE_PERSON_SUCCEEDED, payload: { person: person } });
+        }
+    }
+
+    async function updateServerCallback() {
+        //grab persons from local storage
+        const allKeys = Storage.keys();
+        let promisedPersons;
+        var i;
+
+        promisedPersons = await allKeys.then(function (allKeys) {
+            const promises = [];
+            for (i = 0; i < allKeys.keys.length; i++) {
+                const promisePerson = Storage.get({ key: allKeys.keys[i] });
+                promises.push(promisePerson);
+            }
+            return promises;
+        });
+
+        for (i = 0; i < promisedPersons.length; i++) {
+            const promise = promisedPersons[i];
+            const person = await promise.then(function (it) {
+                var object;
+                try {
+                    object = JSON.parse(it.value!);
+                } catch (e) {
+                    return null;
+                }
+                return object;
+            });
+            if (person !== null) {
+                //person has to be added
+                if (person.status === 1) {
+                    dispatch({ type: DELETE_PERSON_SUCCEEDED, payload: { person: person } });
+                    await Storage.remove({ key: person._id });
+                    const oldPerson = person;
+                    delete oldPerson._id;
+                    oldPerson.status = 0;
+                    const newPerson = await createPerson(token, oldPerson);
+                    dispatch({ type: SAVE_PERSON_SUCCEEDED, payload: { person: newPerson } });
+                    await Storage.set({
+                        key: JSON.stringify(newPerson._id),
+                        value: JSON.stringify(newPerson),
+                    });
+                }
+                //person has to be updated
+                else if (person.status === 2) {
+                    person.status = 0;
+                    const newPerson = await updatePerson(token, person);
+                    dispatch({ type: SAVE_PERSON_SUCCEEDED, payload: { person: newPerson } });
+                    await Storage.set({
+                        key: JSON.stringify(newPerson._id),
+                        value: JSON.stringify(newPerson),
+                    });
+                }
+                //person has to be deleted
+                else if (person.status === 3) {
+                    person.status = 0;
+                    await erasePerson(token, person);
+                    await Storage.remove({ key: person._id });
+                }
+            }
+        }
+    }
+
+    //generates random id for storing person locally
+    function generateRandomID() {
+        return "_" + Math.random().toString(36).substr(2, 9);
     }
 
     function wsEffect() {

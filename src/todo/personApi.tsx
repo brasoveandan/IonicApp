@@ -12,12 +12,12 @@ export const getPersons: (token: string) => Promise<PersonProps[]> = token => {
         result.data.forEach(async (person: PersonProps) => {
             await Storage.set({
                 key: person._id!,
-                value: JSON.stringify({
-                    id: person._id,
-                    nume: person.nume,
-                    prenume: person.prenume,
-                    telefon: person.telefon,
-                    ocupatie: person.ocupatie,
+                value: JSON.stringify({ person
+                    // id: person._id,
+                    // nume: person.nume,
+                    // prenume: person.prenume,
+                    // telefon: person.telefon,
+                    // ocupatie: person.ocupatie,
                 }),
             });
         });
@@ -25,36 +25,41 @@ export const getPersons: (token: string) => Promise<PersonProps[]> = token => {
     return withLogs(result, "getPersons");
 }
 
-export const createPerson: (token: string, person: PersonProps) => Promise<PersonProps[]> = (token, person) => {
+export const getPerson: (token: string, id: string) => Promise<PersonProps> = (token,id) => {
+    var result = axios.get(`${personUrl}/${id}`, authConfig(token))
+    return withLogs(result, "getPerson");
+}
+
+export const createPerson: (token: string, person: PersonProps) => Promise<PersonProps> = (token, person) => {
         var result = axios.post(personUrl, person, authConfig(token));
         result.then(async function (r) {
             var person = r.data;
             await Storage.set({
                 key: person._id!,
-                value: JSON.stringify({
-                    id: person._id,
-                    nume: person.nume,
-                    prenume: person.prenume,
-                    telefon: person.telefon,
-                    ocupatie: person.ocupatie,
+                value: JSON.stringify({ person
+                    // id: person._id,
+                    // nume: person.nume,
+                    // prenume: person.prenume,
+                    // telefon: person.telefon,
+                    // ocupatie: person.ocupatie,
                 }),
             });
         });
         return withLogs(result, "createPerson");
 }
 
-export const updatePerson: (token: string, person: PersonProps) => Promise<PersonProps[]> = (token, person) => {
+export const updatePerson: (token: string, person: PersonProps) => Promise<PersonProps> = (token, person) => {
     var result = axios.put(`${personUrl}/${person._id}`, person, authConfig(token));
     result.then(async function (r) {
         var person = r.data;
         await Storage.set({
             key: person._id!,
-            value: JSON.stringify({
-                id: person._id,
-                nume: person.nume,
-                prenume: person.prenume,
-                telefon: person.telefon,
-                ocupatie: person.ocupatie,
+            value: JSON.stringify({ person
+                // id: person._id,
+                // nume: person.nume,
+                // prenume: person.prenume,
+                // telefon: person.telefon,
+                // ocupatie: person.ocupatie,
             }),
         });
     });
