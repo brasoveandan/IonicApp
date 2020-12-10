@@ -13,11 +13,6 @@ export const getPersons: (token: string) => Promise<PersonProps[]> = token => {
             await Storage.set({
                 key: person._id!,
                 value: JSON.stringify({ person
-                    // id: person._id,
-                    // nume: person.nume,
-                    // prenume: person.prenume,
-                    // telefon: person.telefon,
-                    // ocupatie: person.ocupatie,
                 }),
             });
         });
@@ -37,11 +32,6 @@ export const createPerson: (token: string, person: PersonProps) => Promise<Perso
             await Storage.set({
                 key: person._id!,
                 value: JSON.stringify({ person
-                    // id: person._id,
-                    // nume: person.nume,
-                    // prenume: person.prenume,
-                    // telefon: person.telefon,
-                    // ocupatie: person.ocupatie,
                 }),
             });
         });
@@ -55,11 +45,6 @@ export const updatePerson: (token: string, person: PersonProps) => Promise<Perso
         await Storage.set({
             key: person._id!,
             value: JSON.stringify({ person
-                // id: person._id,
-                // nume: person.nume,
-                // prenume: person.prenume,
-                // telefon: person.telefon,
-                // ocupatie: person.ocupatie,
             }),
         });
     });

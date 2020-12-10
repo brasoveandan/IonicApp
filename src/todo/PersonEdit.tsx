@@ -1,20 +1,25 @@
 import React, { useContext, useEffect, useState } from 'react';
 import {
+    IonActionSheet,
     IonButton,
     IonButtons,
-    IonContent,
-    IonHeader,
+    IonContent, IonFab, IonFabButton,
+    IonHeader, IonIcon,
     IonInput, IonItem, IonLabel, IonListHeader,
     IonLoading,
     IonPage, IonRadio, IonRadioGroup,
     IonTitle,
-    IonToolbar
+    IonToolbar,
+    IonImg
 } from '@ionic/react';
 import { getLogger } from '../core';
 import { PersonContext } from './PersonProvider';
 import { RouteComponentProps } from 'react-router';
 import { PersonProps } from './PersonProps';
 import {useNetwork} from "../utils/useNetwork";
+import {camera, close, trash} from "ionicons/icons";
+import { Photo, usePhotoGallery } from "../utils/usePhotoGallery";
+import {MyMap} from "../utils/MyMap";
 
 const log = getLogger('PersonEdit');
 
@@ -23,14 +28,19 @@ interface PersonEditProps extends RouteComponentProps<{
 }> {}
 
 const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
-    const { persons, saving, savingError, savePerson, deletePerson, getServerPerson, oldPerson } = useContext(PersonContext);
+    const { persons, saving, savingError, savePerson, deletePerson } = useContext(PersonContext);
     const [nume, setNume] = useState('');
     const [prenume, setPrenume] = useState('');
     const [telefon, setTelefon] = useState('');
     const [ocupatie, setOcupatie] = useState('');
+    const [photoPath, setPhotoPath] = useState("");
+    const [latitude, setLatitude] = useState(46.7533824);
+    const [longitude, setLongitude] = useState(23.5831296);
     const [person, setPerson] = useState<PersonProps>();
-    const [person2, setPerson2] = useState<PersonProps>();
     const { networkStatus } = useNetwork();
+    const {photos, takePhoto, deletePhoto } = usePhotoGallery();
+    const [photoToDelete, setPhotoToDelete] = useState<Photo>();
+
     useEffect(() => {
         log('useEffect');
         const routeId = match.params.id || '';
@@ -41,25 +51,64 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
             setPrenume(person.prenume);
             setTelefon(person.telefon);
             setOcupatie(person.ocupatie);
+            setPhotoPath(person.photoPath);
+            if (person.latitude) setLatitude(person.latitude);
+            if (person.longitude) setLongitude(person.longitude);
         }
-    }, [match.params.id, persons, getServerPerson]);
-
-    useEffect(() => {
-        setPerson2(oldPerson);
-        log("OLD PRODUCT: " + JSON.stringify(oldPerson));
-    }, [oldPerson]);
-
+    }, [match.params.id, persons]);
 
     const handleSave = () => {
-        const editedPerson = person ? { ...person, nume, prenume, telefon, ocupatie, status: 0 } : { nume, prenume, telefon, ocupatie, status: 0 };
-        savePerson && savePerson(editedPerson,networkStatus.connected).then(() => { if (person2 === undefined) history.goBack(); })
+        const editedPerson = person
+            ? {
+            ...person,
+                nume,
+                prenume,
+                telefon,
+                ocupatie,
+                status: 0,
+                photoPath,
+                latitude,
+                longitude
+        }
+        : {
+                nume,
+                prenume,
+                telefon,
+                ocupatie,
+                status: 0,
+                photoPath,
+                latitude,
+                longitude
+            };
+        savePerson && savePerson(editedPerson,networkStatus.connected).then(() => { history.goBack(); })
     };
 
     const handleDelete = () => {
-        const editPerson = person ? { ...person, nume, prenume, telefon, ocupatie, status: 0} : {nume, prenume, telefon, ocupatie, status: 0};
+        const editPerson = person
+            ? {
+                ...person,
+                nume,
+                prenume,
+                telefon,
+                ocupatie,
+                status: 0,
+                photoPath,
+                latitude,
+                longitude
+            }
+            : {
+                nume,
+                prenume,
+                telefon,
+                ocupatie,
+                status: 0,
+                photoPath,
+                latitude,
+                longitude
+            };
         deletePerson && deletePerson(editPerson,networkStatus.connected).then(() => history.goBack());
     };
-    log('render');
+
     return (
         <IonPage>
             <IonHeader>
@@ -99,7 +148,52 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
                 <IonLoading isOpen={saving} />
                 {savingError && (
                     <div>{savingError.message || 'Failed to save Person'}</div>
-                )}</IonRadioGroup></IonContent>
+                )}
+                </IonRadioGroup>
+                <img alt={"photoEdit"} src={photoPath} className={"photo-style"} />
+                <MyMap
+                    lat={latitude}
+                    lng={longitude}
+                    onMapClick={(location: any) => {
+                        setLatitude(location.latLng.lat());
+                        setLongitude(location.latLng.lng());
+                    }}
+                />
+                <IonFab vertical="bottom" horizontal="end" slot="fixed">
+                    <IonFabButton
+                        onClick={() => {
+                            const photoTaken = takePhoto();
+                            photoTaken.then((data) => {
+                                setPhotoPath(data.webviewPath!);
+                            });
+                        }}
+                    >
+                        <IonIcon icon={camera} />
+                    </IonFabButton>
+                </IonFab>
+                <IonActionSheet
+                    isOpen={!!photoToDelete}
+                    buttons={[
+                    {
+                        text: "Delete",
+                        role: "destructive",
+                        icon: trash,
+                        handler: () => {
+                            if (photoToDelete) {
+                                deletePhoto(photoToDelete);
+                                setPhotoToDelete(undefined);
+                            }
+                        },
+                    },
+                    {
+                        text: "Cancel",
+                        icon: close,
+                        role: "cancel",
+                    },
+                ]}
+                    onDidDismiss={() => setPhotoToDelete(undefined)}
+                />
+            </IonContent>
         </IonPage>
     );
 };

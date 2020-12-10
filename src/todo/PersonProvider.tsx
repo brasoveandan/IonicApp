@@ -17,7 +17,6 @@ type ServerPerson = (id: string, version: number) => Promise<any>;
 
 export interface PersonsState {
     persons?: PersonProps[],
-    oldPerson?: PersonProps,
     fetching: boolean,
     fetchingError?: Error | null,
     saving: boolean,
@@ -39,7 +38,6 @@ const initialState: PersonsState = {
     fetching: false,
     saving: false,
     deleting: false,
-    oldPerson: undefined,
 };
 
 const FETCH_PERSONS_STARTED = 'FETCH_PERSONS_STARTED';
@@ -55,8 +53,6 @@ const DELETE_PERSON_STARTED = "DELETE_PERSON_STARTED";
 const DELETE_PERSON_SUCCEEDED = "DELETE_PERSON_SUCCEEDED";
 const DELETE_PERSON_FAILED = "DELETE_PERSON_FAILED";
 
-const CONFLICT_SOLVED = "CONFLICT_SOLVED";
-
 const reducer: (state: PersonsState, action: ActionProps) => PersonsState =
     (state, { type, payload }) => {
         switch (type) {
@@ -66,6 +62,7 @@ const reducer: (state: PersonsState, action: ActionProps) => PersonsState =
                 return { ...state, persons: payload.persons, fetching: false };
             case FETCH_PERSONS_FAILED:
                 return { ...state, fetchingError: payload.error, fetching: false };
+
             case SAVE_PERSON_STARTED:
                 return { ...state, savingError: null, saving: true };
             case SAVE_PERSON_SUCCEEDED:
@@ -90,7 +87,6 @@ const reducer: (state: PersonsState, action: ActionProps) => PersonsState =
                 persons.splice(index, 1);
                 return { ...state, persons, deleting: false };
             }
-
             case DELETE_PERSON_FAILED:
                 return { ...state, deletingError: payload.error, deleting: false };
             default:
@@ -115,7 +111,6 @@ export const PersonProvider: React.FC<PersonProviderProps> = ({ children }) => {
         deleting,
         savingError,
         deletingError,
-        oldPerson
     } = state;
     useEffect(getPersonsEffect, [token]);
     useEffect(wsEffect, [token]);
@@ -133,7 +128,6 @@ export const PersonProvider: React.FC<PersonProviderProps> = ({ children }) => {
         savePerson,
         deletePerson,
         updateServer,
-        oldPerson
     };
     log('returns');
     return (
@@ -202,7 +196,6 @@ export const PersonProvider: React.FC<PersonProviderProps> = ({ children }) => {
             const savedPerson = await (person._id ? updatePerson(token, person) : createPerson(token, person));
             log('savePerson succeeded');
             dispatch({ type: SAVE_PERSON_SUCCEEDED, payload: { person: savedPerson } });
-            dispatch({ type: CONFLICT_SOLVED });
         }
         catch (error) {
             log('savePerson failed with error: ', error);

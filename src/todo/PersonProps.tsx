@@ -5,4 +5,7 @@ export interface PersonProps {
     telefon: string;
     ocupatie: string;
     status: number;
+    photoPath: string;
+    latitude:number;
+    longitude:number;
 }

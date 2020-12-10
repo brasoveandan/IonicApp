@@ -11,16 +11,15 @@ import {
     IonLoading,
     IonPage, IonSearchbar, IonSelect, IonSelectOption,
     IonTitle,
-    IonToolbar,IonActionSheet
+    IonToolbar
 } from '@ionic/react';
-import {add, camera, map, close, trash} from 'ionicons/icons';
+import {add} from 'ionicons/icons';
 import Person from './Person';
 import { getLogger } from '../core';
 import { PersonContext } from './PersonProvider';
 import {AuthContext} from "../auth";
 import {PersonProps} from "./PersonProps";
 import {useNetwork} from "../utils/useNetwork";
-import {Photo, usePhotoGallery} from "../utils/usePhotoGallery";
 
 const log = getLogger('PersonList');
 
@@ -36,8 +35,7 @@ const PersonList: React.FC<RouteComponentProps> = ({ history }) => {
     const [personsShow, setPersonsShow] = useState<PersonProps[]>([]);
     const { logout } = useContext(AuthContext);
     const { networkStatus } = useNetwork();
-    const { photos, takePhoto, deletePhoto } = usePhotoGallery();
-    const [photoToDelete, setPhotoToDelete] = useState<Photo>();
+
     const handleLogout = () => {
         logout?.();
         return <Redirect to={{ pathname: "/login" }} />;
@@ -45,7 +43,7 @@ const PersonList: React.FC<RouteComponentProps> = ({ history }) => {
 
     //update server when network status is back online
     useEffect(() => {
-        if (networkStatus.connected === true) {
+        if (networkStatus.connected) {
             updateServer && updateServer();
         }
     }, [networkStatus.connected]);
@@ -123,6 +121,9 @@ const PersonList: React.FC<RouteComponentProps> = ({ history }) => {
                             telefon={person.telefon}
                             ocupatie={person.ocupatie}
                             status={person.status}
+                            photoPath={person.photoPath}
+                            latitude={person.latitude}
+                            longitude={person.longitude}
                             onEdit={(id) => history.push(`/person/${id}`)}
                         />
                     );
@@ -141,42 +142,6 @@ const PersonList: React.FC<RouteComponentProps> = ({ history }) => {
                         <IonIcon icon={add} />
                     </IonFabButton>
                 </IonFab>
-                <IonFab vertical="bottom" horizontal="start" slot="fixed">
-                    <IonFabButton
-                        onClick={() => {
-                            history.push("/persons/map");
-                        }}
-                    >
-                        <IonIcon icon={map} />
-                    </IonFabButton>
-                </IonFab>
-                <IonFab vertical="bottom" horizontal="center" slot="fixed">
-                    <IonFabButton onClick={() => takePhoto()}>
-                        <IonIcon icon={camera} />
-                    </IonFabButton>
-                </IonFab>
-                <IonActionSheet
-                    isOpen={!!photoToDelete}
-                    buttons={[
-                        {
-                            text: "Delete",
-                            role: "destructive",
-                            icon: trash,
-                            handler: () => {
-                                if (photoToDelete) {
-                                    deletePhoto(photoToDelete);
-                                    setPhotoToDelete(undefined);
-                                }
-                            },
-                        },
-                        {
-                            text: "Cancel",
-                            icon: close,
-                            role: "cancel",
-                        },
-                    ]}
-                    onDidDismiss={() => setPhotoToDelete(undefined)}
-                />
             </IonContent>
         </IonPage>
     );
