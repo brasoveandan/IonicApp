@@ -20,6 +20,7 @@ import {useNetwork} from "../utils/useNetwork";
 import {camera, close, trash} from "ionicons/icons";
 import { Photo, usePhotoGallery } from "../utils/usePhotoGallery";
 import {MyMap} from "../utils/MyMap";
+import {FilesystemDirectory} from "@capacitor/core";
 
 const log = getLogger('PersonEdit');
 
@@ -40,6 +41,7 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
     const { networkStatus } = useNetwork();
     const {photos, takePhoto, deletePhoto } = usePhotoGallery();
     const [photoToDelete, setPhotoToDelete] = useState<Photo>();
+    const photo = useState<Photo>();
 
     useEffect(() => {
         log('useEffect');
@@ -107,7 +109,7 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
                 longitude
             };
         deletePerson && deletePerson(editPerson,networkStatus.connected).then(() => history.goBack());
-    };
+    }
 
     return (
         <IonPage>
@@ -125,16 +127,20 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
                 </IonToolbar>
             </IonHeader>
             <IonContent>
-                <IonInput className="inputField" placeholder="Nume" value={nume} onIonChange={e => setNume(e.detail.value || '')}/>
-                <IonInput className="inputField" placeholder="Prenume" value={prenume} onIonChange={e => setPrenume(e.detail.value || '')} />
-                <IonInput className="inputField" placeholder="Telefon" value={telefon} onIonChange={e => setTelefon(e.detail.value || '')}/>
-                <IonRadioGroup allowEmptySelection={false} value={ocupatie} onIonChange={e => setOcupatie(e.detail.value)}>
+                <IonInput className="inputField" placeholder="Nume" value={nume}
+                          onIonChange={e => setNume(e.detail.value || '')}/>
+                <IonInput className="inputField" placeholder="Prenume" value={prenume}
+                          onIonChange={e => setPrenume(e.detail.value || '')}/>
+                <IonInput className="inputField" placeholder="Telefon" value={telefon}
+                          onIonChange={e => setTelefon(e.detail.value || '')}/>
+                <IonRadioGroup allowEmptySelection={false} value={ocupatie}
+                               onIonChange={e => setOcupatie(e.detail.value)}>
                     <IonListHeader>
                         <IonLabel>Select Group: </IonLabel>
                     </IonListHeader>
                     <IonItem>
                         <IonLabel>Not set</IonLabel>
-                        <IonRadio slot="end" color="primary" value="Not set" ></IonRadio>
+                        <IonRadio slot="end" color="primary" value="Not set"></IonRadio>
                     </IonItem>
                     <IonItem>
                         <IonLabel>Favourites</IonLabel>
@@ -145,12 +151,18 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
                         <IonRadio slot="end" color="primary" value="Family"></IonRadio>
                     </IonItem>
 
-                <IonLoading isOpen={saving} />
-                {savingError && (
-                    <div>{savingError.message || 'Failed to save Person'}</div>
-                )}
+                    <IonLoading isOpen={saving}/>
+                    {savingError && (
+                        <div>{savingError.message || 'Failed to save Person'}</div>
+                    )}
                 </IonRadioGroup>
-                <img alt={"photoEdit"} src={photoPath} className={"photo-style"} />
+                {/*<IonImg class={"photo-style"} src={photoPath}/>*/}
+                <IonImg
+                    style={{width: "500px", height: "500px", margin: "0 auto"}}
+                    onClick={() => {setPhotoToDelete(photos?.find(p => p.webviewPath === photoPath))}}
+                    alt={"No photo"}
+                    src={photoPath}
+                />
                 <MyMap
                     lat={latitude}
                     lng={longitude}
@@ -168,29 +180,30 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
                             });
                         }}
                     >
-                        <IonIcon icon={camera} />
+                        <IonIcon icon={camera}/>
                     </IonFabButton>
                 </IonFab>
                 <IonActionSheet
                     isOpen={!!photoToDelete}
                     buttons={[
-                    {
-                        text: "Delete",
-                        role: "destructive",
-                        icon: trash,
-                        handler: () => {
-                            if (photoToDelete) {
-                                deletePhoto(photoToDelete);
-                                setPhotoToDelete(undefined);
-                            }
+                        {
+                            text: "Delete",
+                            role: "destructive",
+                            icon: trash,
+                            handler: () => {
+                                if (photoToDelete) {
+                                    deletePhoto(photoToDelete);
+                                    setPhotoToDelete(undefined);
+                                    setPhotoPath("")
+                                }
+                            },
                         },
-                    },
-                    {
-                        text: "Cancel",
-                        icon: close,
-                        role: "cancel",
-                    },
-                ]}
+                        {
+                            text: "Cancel",
+                            icon: close,
+                            role: "cancel",
+                        },
+                    ]}
                     onDidDismiss={() => setPhotoToDelete(undefined)}
                 />
             </IonContent>

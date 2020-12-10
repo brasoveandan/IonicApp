@@ -16,11 +16,9 @@ http://ionicframework.com/docs/theming/ */
 .photo-style{
   display:block;
   margin:0 auto;
-  padding-bottom: 25px;
-  padding-top: 20px;
+  padding-bottom: 10px;
+  padding-top: 10px;
 }
-
-
 
 .icon{
   color:black;
