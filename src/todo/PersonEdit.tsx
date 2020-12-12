@@ -20,7 +20,6 @@ import {useNetwork} from "../utils/useNetwork";
 import {camera, close, trash} from "ionicons/icons";
 import { Photo, usePhotoGallery } from "../utils/usePhotoGallery";
 import {MyMap} from "../utils/MyMap";
-import {FilesystemDirectory} from "@capacitor/core";
 
 const log = getLogger('PersonEdit');
 
@@ -41,7 +40,6 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
     const { networkStatus } = useNetwork();
     const {photos, takePhoto, deletePhoto } = usePhotoGallery();
     const [photoToDelete, setPhotoToDelete] = useState<Photo>();
-    const photo = useState<Photo>();
 
     useEffect(() => {
         log('useEffect');
@@ -156,10 +154,9 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
                         <div>{savingError.message || 'Failed to save Person'}</div>
                     )}
                 </IonRadioGroup>
-                {/*<IonImg class={"photo-style"} src={photoPath}/>*/}
                 <IonImg
                     style={{width: "500px", height: "500px", margin: "0 auto"}}
-                    onClick={() => {setPhotoToDelete(photos?.find(p => p.webviewPath === photoPath))}}
+                    onClick={() => {console.log(photoPath); console.log(photos)}}
                     alt={"No photo"}
                     src={photoPath}
                 />
