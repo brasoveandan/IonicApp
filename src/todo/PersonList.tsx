@@ -29,7 +29,7 @@ const PersonList: React.FC<RouteComponentProps> = ({ history }) => {
         false
     );
     const [filter, setFilter] = useState<string | undefined>(undefined);
-    const [search, setSearch] = useState<string>("");
+    const [search, setSearch] = useState<string>('');
     const [pos, setPos] = useState(10);
     const selectOptions = ["Not set", "Favourites", "Family"];
     const [personsShow, setPersonsShow] = useState<PersonProps[]>([]);

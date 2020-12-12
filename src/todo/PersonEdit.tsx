@@ -33,7 +33,7 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
     const [prenume, setPrenume] = useState('');
     const [telefon, setTelefon] = useState('');
     const [ocupatie, setOcupatie] = useState('');
-    const [photoPath, setPhotoPath] = useState("");
+    const [photoPath, setPhotoPath] = useState('');
     const [latitude, setLatitude] = useState(46.7533824);
     const [longitude, setLongitude] = useState(23.5831296);
     const [person, setPerson] = useState<PersonProps>();
@@ -156,7 +156,7 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
                 </IonRadioGroup>
                 <IonImg
                     style={{width: "500px", height: "500px", margin: "0 auto"}}
-                    onClick={() => {console.log(photoPath); console.log(photos)}}
+                    onClick={() => {setPhotoToDelete(photos?.find(item => item.webviewPath === photoPath))}}
                     alt={"No photo"}
                     src={photoPath}
                 />
