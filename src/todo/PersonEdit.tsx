@@ -34,8 +34,8 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
     const [telefon, setTelefon] = useState('');
     const [ocupatie, setOcupatie] = useState('');
     const [photoPath, setPhotoPath] = useState('');
-    const [latitude, setLatitude] = useState(46.7533824);
-    const [longitude, setLongitude] = useState(23.5831296);
+    const [latitude, setLatitude] = useState(46.22000169197405);
+    const [longitude, setLongitude] = useState(24.118391152210002);
     const [person, setPerson] = useState<PersonProps>();
     const { networkStatus } = useNetwork();
     const {photos, takePhoto, deletePhoto } = usePhotoGallery();
