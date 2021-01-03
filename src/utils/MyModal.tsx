@@ -1,15 +1,8 @@
-import React, {useState} from 'react';
-import { IonItem, IonLabel, createAnimation, IonModal, IonButton } from '@ionic/react';
-import { PersonProps } from './PersonProps';
-import {
-    IonImg,
-} from '@ionic/react';
+import React, {useState} from "react";
+import {createAnimation, IonButton, IonImg, IonModal} from "@ionic/react";
 
-interface PersonPropsExt extends PersonProps {
-    onEdit: (id?: string) => void;
-}
 
-const Person: React.FC<PersonPropsExt> = ({ _id, nume, prenume, telefon, ocupatie, photoPath, onEdit }) => {
+export const MyModal : React.FC = () => {
     const [showModal, setShowModal] = useState(false);
 
     const enterAnimation = (baseEl: any) => {
@@ -36,33 +29,15 @@ const Person: React.FC<PersonPropsExt> = ({ _id, nume, prenume, telefon, ocupati
     };
 
     return (
-        <IonItem>
-            <IonLabel onClick={() => onEdit(_id)}>{nume}</IonLabel>
-            {/*<IonLabel>{prenume}</IonLabel>*/}
-            <IonLabel onClick={() => onEdit(_id)}>{nume}>{telefon}</IonLabel>
-            <IonLabel onClick={() => onEdit(_id)}>{nume}>{ocupatie}</IonLabel>
-            <IonLabel>
-                <IonImg
-                    style={{width: "100px"}}
-                    alt={"No Photo"}
-                    src={photoPath}
-                    onClick={() => {setShowModal(true);}}
-                />
-            </IonLabel>
+        <>
             <IonModal
                 isOpen={showModal}
                 enterAnimation={enterAnimation}
                 leaveAnimation={leaveAnimation}
             >
-                <IonImg
-                    alt={"No Photo"}
-                    src={photoPath}
-                    onClick={() => {setShowModal(true);}}
-                />
+                <p>Image</p>
                 <IonButton onClick={() => setShowModal(false)}>Close Image</IonButton>
             </IonModal>
-        </IonItem>
+        </>
     );
 };
-
-export default Person;

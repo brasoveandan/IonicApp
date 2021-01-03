@@ -2,6 +2,7 @@ import React, {useContext, useEffect, useState} from 'react';
 import { RouteComponentProps } from 'react-router';
 import { Redirect } from "react-router-dom";
 import {
+    createAnimation,
     IonButton, IonButtons,
     IonContent,
     IonFab,
@@ -79,12 +80,53 @@ const PersonList: React.FC<RouteComponentProps> = ({ history }) => {
             setPersonsShow(persons.filter((person) => person.nume.startsWith(search)));
         }
     }, [search]);
+
+    function simpleAnimation() {
+        const el = document.querySelector(".networkStatus");
+        if (el) {
+            const animation = createAnimation()
+                .addElement(el)
+                .duration(1000)
+                .direction("alternate")
+                .iterations(Infinity)
+                .keyframes([
+                    { offset: 0, transform: "scale(1)", opacity: "1" },
+                    {
+                        offset: 1,
+                        transform: "scale(0.95)",
+                        opacity: "1",
+                    },
+                ]);
+            animation.play();
+        }
+    }
+    useEffect(simpleAnimation, []);
+
+    function groupAnimations() {
+        const elem1 = document.querySelector('.searchBar');
+        const elem2 = document.querySelector('.select');
+        if (elem1 && elem2) {
+            const animation1 = createAnimation()
+                .addElement(elem1)
+                .fromTo('transform', 'scale(0.8)','scale(1)');
+            const animation2 = createAnimation()
+                .addElement(elem2)
+                .fromTo('transform', 'scale(1)', 'scale(0.8)');
+            const parentAnimation = createAnimation()
+                .duration(600)
+                .direction("alternate")
+                .iterations(3)
+                .addAnimation([animation1, animation2]);
+            parentAnimation.play();    }
+    }
+    useEffect(groupAnimations, []);
+
     return (
         <IonPage>
             <IonHeader>
                 <IonToolbar>
-                    <IonTitle>My Agenda: <b>{networkStatus.connected ? "online" : "offline"}</b>
-                    </IonTitle>
+                    <IonTitle>My Agenda</IonTitle>
+                    <div className="networkStatus">Status: {networkStatus.connected ? "online" : "offline"}</div>
                     <IonButtons slot="end">
                         <IonButton onClick={handleLogout}>
                             Logout
@@ -94,22 +136,26 @@ const PersonList: React.FC<RouteComponentProps> = ({ history }) => {
             </IonHeader>
             <IonContent fullscreen>
                 <IonLoading isOpen={fetching} message="Fetching Persons" />
-                <IonSearchbar
-                    value={search}
-                    debounce={1000}
-                    onIonChange={(e) => setSearch(e.detail.value!)}
-                ></IonSearchbar>
-                <IonSelect
-                    value={filter}
-                    placeholder="Selection about group"
-                    onIonChange={(e) => setFilter(e.detail.value)}
-                >
-                    {selectOptions.map((option) => (
-                        <IonSelectOption key={option} value={option}>
-                            {option}
-                        </IonSelectOption>
-                    ))}
-                </IonSelect>
+                <div className="searchBar">
+                    <IonSearchbar
+                        value={search}
+                        debounce={1000}
+                        onIonChange={(e) => setSearch(e.detail.value!)}
+                    ></IonSearchbar>
+                </div>
+                <div className="select">
+                    <IonSelect
+                        value={filter}
+                        placeholder="Selection about group"
+                        onIonChange={(e) => setFilter(e.detail.value)}
+                    >
+                        {selectOptions.map((option) => (
+                            <IonSelectOption key={option} value={option}>
+                                {option}
+                            </IonSelectOption>
+                        ))}
+                    </IonSelect>
+                </div>
                 {personsShow &&
                 personsShow.map((person: PersonProps) => {
                     return (

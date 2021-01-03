@@ -10,7 +10,7 @@ import {
     IonPage, IonRadio, IonRadioGroup,
     IonTitle,
     IonToolbar,
-    IonImg
+    IonImg, createAnimation
 } from '@ionic/react';
 import { getLogger } from '../core';
 import { PersonContext } from './PersonProvider';
@@ -109,6 +109,32 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
         deletePerson && deletePerson(editPerson,networkStatus.connected).then(() => history.goBack());
     }
 
+    function chainAnimations() {
+        const label1 = document.querySelector('.label1');
+        const label2 = document.querySelector('.label2');
+        const label3 = document.querySelector('.label3');
+        const elem2 = document.querySelector('.group');
+        if (label1 && label2 && label3 && elem2) {
+            const animation1 = createAnimation()
+                .addElement(Array.of(label1, label2, label3))
+                .duration(100)
+                .direction("alternate")
+                .iterations(3)
+                .fromTo('transform', 'rotate(0)', 'rotate(20deg)')
+                .fromTo('transform', 'rotate(20deg)', 'rotate(0)');
+
+            const animation2= createAnimation()
+                .addElement(elem2)
+                .duration(500)
+                .fromTo('transform', 'scale(1)', 'scale(0.9)');
+            (async () => {
+               await animation1.play();
+               await animation2.play();
+            })();
+        }
+    }
+    useEffect(chainAnimations, []);
+
     return (
         <IonPage>
             <IonHeader>
@@ -125,14 +151,33 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
                 </IonToolbar>
             </IonHeader>
             <IonContent>
-                <IonInput className="inputField" placeholder="Nume" value={nume}
-                          onIonChange={e => setNume(e.detail.value || '')}/>
-                <IonInput className="inputField" placeholder="Prenume" value={prenume}
-                          onIonChange={e => setPrenume(e.detail.value || '')}/>
-                <IonInput className="inputField" placeholder="Telefon" value={telefon}
-                          onIonChange={e => setTelefon(e.detail.value || '')}/>
-                <IonRadioGroup allowEmptySelection={false} value={ocupatie}
-                               onIonChange={e => setOcupatie(e.detail.value)}>
+                <IonItem>
+                    <div className="label1"><IonLabel>First Name:</IonLabel></div>
+                    <IonInput
+                        className="inputField"
+                        placeholder="Nume"
+                        value={nume}
+                        onIonChange={e => setNume(e.detail.value || '')}/>
+                </IonItem>
+                <IonItem>
+                    <div className="label2"><IonLabel>Last Name:</IonLabel></div>
+                    <IonInput
+                        className="inputField"
+                        placeholder="Prenume"
+                        value={prenume}
+                        onIonChange={e => setPrenume(e.detail.value || '')}/>
+                </IonItem>
+                <IonItem>
+                    <div className="label3"><IonLabel>Phone:</IonLabel>
+                    </div>
+                    <IonInput
+                        className="inputField"
+                        placeholder="Telefon"
+                        value={telefon}
+                        onIonChange={e => setTelefon(e.detail.value || '')}/>
+                </IonItem>
+                <div className="group"> <IonRadioGroup allowEmptySelection={false} value={ocupatie}
+                                     onIonChange={e => setOcupatie(e.detail.value)}>
                     <IonListHeader>
                         <IonLabel>Select Group: </IonLabel>
                     </IonListHeader>
@@ -154,6 +199,8 @@ const PersonEdit: React.FC<PersonEditProps> = ({ history, match }) => {
                         <div>{savingError.message || 'Failed to save Person'}</div>
                     )}
                 </IonRadioGroup>
+                </div>
+
                 <IonImg
                     style={{width: "500px", height: "500px", margin: "0 auto"}}
                     onClick={() => {setPhotoToDelete(photos?.find(item => item.webviewPath === photoPath))}}
