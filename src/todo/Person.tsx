@@ -39,8 +39,8 @@ const Person: React.FC<PersonPropsExt> = ({ _id, nume, prenume, telefon, ocupati
         <IonItem>
             <IonLabel onClick={() => onEdit(_id)}>{nume}</IonLabel>
             {/*<IonLabel>{prenume}</IonLabel>*/}
-            <IonLabel onClick={() => onEdit(_id)}>{nume}>{telefon}</IonLabel>
-            <IonLabel onClick={() => onEdit(_id)}>{nume}>{ocupatie}</IonLabel>
+            <IonLabel onClick={() => onEdit(_id)}>{telefon}</IonLabel>
+            <IonLabel onClick={() => onEdit(_id)}>{ocupatie}</IonLabel>
             <IonLabel>
                 <IonImg
                     style={{width: "100px"}}
