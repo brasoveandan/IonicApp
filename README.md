@@ -1,5 +1,12 @@
 # IonicApp
 My first Ionic application.
 
+* Agenda Application: 
 
-Agenda Application: authenticate user, show a list persons: first name: string, last name: string, phone: string, group: select and add or edit person.
+1. Authenticate user
+1. Show a list persons:
+   1. first name: string
+   1. last name: string
+   1. phone: string
+   1. group: string
+1. Add or edit person.
