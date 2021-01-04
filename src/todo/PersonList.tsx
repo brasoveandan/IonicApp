@@ -89,14 +89,7 @@ const PersonList: React.FC<RouteComponentProps> = ({ history }) => {
                 .duration(1000)
                 .direction("alternate")
                 .iterations(Infinity)
-                .keyframes([
-                    { offset: 0, transform: "scale(1)", opacity: "1" },
-                    {
-                        offset: 1,
-                        transform: "scale(0.95)",
-                        opacity: "1",
-                    },
-                ]);
+                .fromTo('transform', 'translateX(0px)','translateX(30px)')
             animation.play();
         }
     }
